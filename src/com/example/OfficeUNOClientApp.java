@@ -38,7 +38,7 @@ public class OfficeUNOClientApp {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        File[] files = new File("/Users/vingtoft/Documents/Development/Vingtoft Development/TopTrack/reports/").listFiles();
+        File[] files = new File("/Users/vingtoft/Documents/Development/Vingtoft Development/reports/").listFiles();
         for (File file : files) {
             String name = file.getName();
             String x;
@@ -52,7 +52,7 @@ public class OfficeUNOClientApp {
                 String pathToFile = file.getAbsolutePath();
 
                 String loadUrl = "file://" + pathToFile;
-                String storeUrl = "file:///Users/vingtoft/Documents/Development/Vingtoft Development/TopTrack/reports/pdf/" + name.replace("xlsx", "pdf");
+                String storeUrl = "file:///Users/vingtoft/Documents/Development/Vingtoft Development/reports/pdf/" + name.replace("xlsx", "pdf");
 
                 System.out.println(storeUrl);
 
