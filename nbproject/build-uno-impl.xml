@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="OfficeUNOClientApp-uno-impl" default="default" basedir="..">
+    <description>Builds, tests, and runs an UNO project.</description>
+
+    <import file="build-impl.xml"/>
+
+    <target name="-post-init">
+        <property file="nbproject/project-uno.properties"/>
+        <property name="build.uno.version" value="2.0.6.000205"/>
+ 
+        <property name="run-sys-prop.com.sun.star.lib.loader.unopath" value="${office.program.dir}"/>
+        <property name="run-sys-prop.Application-Class" value="${uno.main.class}"/>
+    </target>
+    
+    <target name="-uno-project-init" depends="-do-init">
+        <dirname property="project.dir" file="build.xml"/>       
+
+        <fileset id="bootstrap.glue.code" dir="${oo.sdk.dir}${file.separator}classes">
+            <patternset>
+                <include name="win/unowinreg.dll"/>
+            </patternset>
+        </fileset>        
+    </target>
+       
+    <!-- jar including manifest: usr's own or a created one -->
+    <target name="jar" depends="-uno-project-init,compile,-pre-jar,-do-jar-jar,-do-jar-without-libraries,-do-jar-with-libraries,-do-openoffice-manifest,-post-jar">
+        <jar basedir="${build.classes.dir}" manifest="${build.dir}/MANIFEST.MF" filesonly="true" compress="true" jarfile="${dist.jar}">
+            <fileset refid="bootstrap.glue.code"/>
+        </jar>
+    </target>
+
+    <!-- to goive the user a chance to set his custom values inside of the manifest, each
+         property set here checks if it does already exist inside of the user manifest -->
+    <target name="-do-openoffice-manifest" depends="-include-custom-manifest,-build-manifest,-build-filelist,-add-external-jars-to-classpath"/>
+    
+    <!-- add classpath with external jars to manifest, every jar must be prefixed with "lib/", use manifest.lst for this -->
+    <target name ="-add-external-jars-to-classpath" depends="-check-class-path" if="do.external.jars" unless="class.path.exists">
+        <pathconvert property="correct.file.list" pathsep=" ">
+            <path path="${file.list}"/>
+            <chainedmapper>
+                <flattenmapper/>
+                <globmapper from="*" to="lib/*"/>
+            </chainedmapper>
+        </pathconvert>
+        <manifest file="${build.dir}/MANIFEST.MF" mode="update">
+            <attribute name="Class-Path" value="${correct.file.list}"/>
+        </manifest>
+    </target>
+    <target name="-check-class-path">
+        <condition property="class.path.exists">
+            <isfileselected file="${build.dir}/MANIFEST.MF">
+                <contains text="Class-Path"/>
+            </isfileselected>
+        </condition>
+    </target>
+        
+    <!-- build list for external jars: Apache OpenOffice jars have to be excluded -->
+    <target name="-build-filelist">
+        <property file="nbproject/project-uno.properties"/>
+        <zipfileset id="zip.file.list" dir="${dist.dir}/lib" excludes="${exclude.office.jars}" includes="**/*.jar" casesensitive="yes" erroronmissingdir="false"/>
+        <property name="file.list" refid="zip.file.list"/>
+        <condition property="do.external.jars">
+            <length string="${file.list}" when="greater" length="0"/>
+        </condition>
+        <delete>
+            <filelist dir="${dist.dir}/lib" files="${exclude.office.jars}"/>
+        </delete>
+    </target>
+    
+    <!-- build manifest for simple bootstrap -->
+    <target name="-build-manifest" depends="-check-application-class" unless="application.class.exists">
+        <manifest file="${build.dir}/MANIFEST.MF" mode="update">
+            <attribute name="Main-Class" value="com.sun.star.lib.loader.Loader"/>
+            <section name="com/sun/star/lib/loader/Loader.class">
+                <attribute name="Application-Class" value="${uno.main.class}"/>
+            </section>
+        </manifest>
+    </target>
+    <target name="-check-application-class">
+        <condition property="application.class.exists">
+        <isfileselected file="${build.dir}/MANIFEST.MF">
+            <contains text="Application-Class"/>
+        </isfileselected>
+        </condition>
+    </target>
+    
+    <!-- include a custom manifest from user -->
+    <target name="-include-custom-manifest" description="custom">
+        <copy file="manifest.mf" tofile="${build.dir}/MANIFEST.MF" overwrite="true" failonerror="false"/>
+    </target>
+    
+</project>
